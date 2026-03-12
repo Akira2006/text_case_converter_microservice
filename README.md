@@ -1,6 +1,6 @@
 # Text Case Converter Microservice
 
-A Python microservice built with Flask that converts text into different case formats through an HTTP API. This project demonstrates microservice architecture principles by enabling programmatic text transformation across distributed systems.
+A Python microservice built with Flask that converts text into different case formats through an HTTP API. This project demonstrates microservice architecture principles by enabling programmatic text transformation across distributed systems through HTTP requests and responses.
 
 ## Table of Contents
 
@@ -11,13 +11,13 @@ A Python microservice built with Flask that converts text into different case fo
 - [API Documentation](#api-documentation)
 - [Project Structure](#project-structure)
 - [Testing](#testing)
-- [Future Improvements](#future-improvements)
+- [Architecture](#architecture)
 
 ## Features
 
-- **Multiple Case Conversions**: Convert text to uppercase, lowercase, or title case
-- **HTTP API**: RESTful endpoint for seamless integration with other services
-- **Microservice Architecture**: Lightweight and independent service for text transformation
+- **Text Case Conversion**: Convert text to uppercase, lowercase, or title case via HTTP API
+- **Microservice Architecture**: Independent service communicating through HTTP requests and responses
+- **Single Endpoint Design**: Unified `/convert` endpoint with flexible case parameter
 - **Test Client**: Included demo client showing how to integrate with the microservice
 - **Error Handling**: Graceful handling of invalid requests
 
@@ -45,6 +45,11 @@ cd text_case_converter_microservice
 
 2. Install required dependencies:
 ```bash
+pip install -r requirements.txt
+```
+
+Or manually install:
+```bash
 pip install Flask requests
 ```
 
@@ -62,6 +67,8 @@ The server will start on:
 http://localhost:5002
 ```
 
+You should see output indicating the Flask server is running on `http://localhost:5002`.
+
 ### Using the Test Client
 
 Open a new terminal and run:
@@ -69,7 +76,7 @@ Open a new terminal and run:
 python test_client.py
 ```
 
-Example output:
+The test client will send a POST request to the microservice and display the converted result. Example output:
 ```
 Response:
 {'result': 'HELLO WORLD'}
@@ -77,74 +84,76 @@ Response:
 
 ## API Documentation
 
-### Endpoints
+### Endpoint
 
-#### Convert Text to Uppercase
-- **URL**: `/uppercase`
+#### Convert Text Case
+- **URL**: `/convert`
 - **Method**: `POST`
-- **Request Body**:
+- **Port**: `5002`
+
+### Request Body
+
 ```json
 {
-  "text": "hello world"
-}
-```
-- **Response**:
-```json
-{
-  "result": "HELLO WORLD"
+  "text": "hello world",
+  "case": "upper"
 }
 ```
 
-#### Convert Text to Lowercase
-- **URL**: `/lowercase`
-- **Method**: `POST`
-- **Request Body**:
+**Parameters:**
+- `text` (string, required): The text to be converted
+- `case` (string, required): The target case format. Valid values are:
+  - "upper" - Convert to UPPERCASE
+  - "lower" - Convert to lowercase
+  - "title" - Convert to Title Case
+
+### Response Format
+
 ```json
 {
-  "text": "HELLO WORLD"
-}
-```
-- **Response**:
-```json
-{
-  "result": "hello world"
+  "result": "CONVERTED TEXT"
 }
 ```
 
-#### Convert Text to Title Case
-- **URL**: `/titlecase`
-- **Method**: `POST`
-- **Request Body**:
-```json
-{
-  "text": "hello world"
-}
-```
-- **Response**:
-```json
-{
-  "result": "Hello World"
-}
-```
+### Example Requests
 
-### Example Usage with cURL
+#### Convert to Uppercase
 
+Using cURL:
 ```bash
-curl -X POST http://localhost:5002/uppercase \
+curl -X POST http://localhost:5002/convert \
   -H "Content-Type: application/json" \
-  -d '{"text": "hello world"}'
+  -d '{"text": "hello world", "case": "upper"}'
 ```
 
-### Example Usage with Python Requests
-
+Using Python Requests:
 ```python
 import requests
 
 response = requests.post(
-    'http://localhost:5002/uppercase',
-    json={'text': 'hello world'}
+    'http://localhost:5002/convert',
+    json={'text': 'hello world', 'case': 'upper'}
 )
 print(response.json())
+# Output: {'result': 'HELLO WORLD'}
+```
+
+#### Convert to Lowercase
+
+Using cURL:
+```bash
+curl -X POST http://localhost:5002/convert \
+  -H "Content-Type: application/json" \
+  -d '{"text": "HELLO WORLD", "case": "lower"}'
+```
+
+#### Convert to Title Case
+
+Using cURL:
+```bash
+curl -X POST http://localhost:5002/convert \
+  -H "Content-Type: application/json" \
+  -d '{"text": "hello world", "case": "title"}'
 ```
 
 ## Project Structure
@@ -152,10 +161,16 @@ print(response.json())
 ```
 text_case_converter_microservice/
 ├── app.py                 # Flask microservice application
-├── test_client.py         # Client program for testing the service
-├── requirements.txt       # Python dependencies
+├── test_client.py         # Test client for the microservice
+├── requirements.txt       # Python dependencies (Flask, requests)
 └── README.md             # Project documentation
 ```
+
+### File Descriptions
+
+- **app.py**: Contains the Flask server that runs on port 5002 and exposes the `/convert` endpoint
+- **test_client.py**: Demonstrates how to communicate with the microservice by sending HTTP POST requests to the `/convert` endpoint using the requests library
+- **requirements.txt**: Lists all Python dependencies needed to run the microservice and test client
 
 ## Testing
 
@@ -171,25 +186,75 @@ python app.py
 python test_client.py
 ```
 
-You should see successful responses with converted text.
+You should see a successful response with the converted text.
 
-## Future Improvements
+### Manual Testing
 
-- Add support for additional case formats (camelCase, snake_case)
-- Implement input validation and error messages
-- Add logging for debugging and monitoring
-- Create unit tests for API endpoints
-- Deploy to a cloud platform (AWS, Heroku, etc.)
-- Add Docker support for containerization
+You can also test the API manually using cURL or any HTTP client:
+
+```bash
+# Test uppercase conversion
+curl -X POST http://localhost:5002/convert \
+  -H "Content-Type: application/json" \
+  -d '{"text": "test", "case": "upper"}'
+
+# Test lowercase conversion
+curl -X POST http://localhost:5002/convert \
+  -H "Content-Type: application/json" \
+  -d '{"text": "TEST", "case": "lower"}'
+
+# Test title case conversion
+curl -X POST http://localhost:5002/convert \
+  -H "Content-Type: application/json" \
+  -d '{"text": "hello world", "case": "title"}'
+```
+
+## Architecture
+
+This microservice demonstrates a **client-server architecture** where:
+
+1. **Server (app.py)**: A Flask application that runs on `http://localhost:5002` and provides the `/convert` endpoint
+2. **Client (test_client.py)**: A Python script that communicates with the server using HTTP POST requests
+
+### Communication Flow
+
+```
+test_client.py
+    ↓
+HTTP POST Request to /convert endpoint
+    ↓
+app.py (Flask Server on port 5002)
+    ↓
+Process request & convert text
+    ↓
+HTTP Response with JSON result
+    ↓
+test_client.py receives and displays result
+```
+
+The client and server communicate entirely through HTTP requests and responses, not through direct function calls. This separation demonstrates true microservice architecture principles.
 
 ## Learning Outcomes
 
 This project demonstrates:
 - Building microservices with Flask
 - Creating REST APIs
-- Client-server communication using HTTP
+- Client-server communication using HTTP requests and responses
 - Separation of concerns in software architecture
+- JSON request/response handling
+- Microservice architectural patterns
 - Python best practices
+
+## Future Improvements
+
+- Add support for additional case formats (camelCase, snake_case, kebab-case)
+- Implement comprehensive input validation and error messages
+- Add logging for debugging and monitoring
+- Create unit tests for API endpoints
+- Deploy to a cloud platform (AWS, Heroku, etc.)
+- Add Docker support for containerization
+- Implement request rate limiting
+- Add API documentation with Swagger/OpenAPI
 
 ## License
 
@@ -202,4 +267,4 @@ GitHub: [@Akira2006](https://github.com/Akira2006)
 
 ---
 
-*Last Updated: 2026-03-12 10:59:14*
+*Last Updated: 2026-03-12*
